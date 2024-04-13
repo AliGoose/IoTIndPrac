@@ -87,7 +87,7 @@ foreach ($numericValues as $value => $freq) {
 
             var options = {
                 title: 'Frequency of Message Values',
-                hAxis: {title: 'Message Value', titleTextStyle: {color: '#333'}},
+                hAxis: {title: 'values', titleTextStyle: {color: '#333'}},
                 vAxis: {title: 'Frequency', minValue: 0},
                 legend: 'none',
                 chartArea: {width: "50%", height: "70%"}
@@ -106,7 +106,7 @@ foreach ($numericValues as $value => $freq) {
 </head>
 <body>
     <div id="chart_div" style="width: 900px; height: 500px;"></div>
-    <button onclick="displayStatistics()">Generate</button>
+    <button onclick="displayStatistics()">Generate Data Analytics</button>
     <div id="mean"></div>
     <div id="median"></div>
     <div id="mode"></div>

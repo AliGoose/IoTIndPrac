@@ -1,5 +1,7 @@
 import serial
 
+threshold = 500
+
 if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyS0',9600, timeout=1)
     ser.reset_input_buffer()
@@ -9,7 +11,7 @@ if __name__ == '__main__':
             line = ser.readline().decode('utf-8')
             value = int(line)
             print(value)
-            if value > 500:
+            if value > threshold:
                 ser.write("ON\n".encode())
             else:
                 ser.write("OFF\n".encode())

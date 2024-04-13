@@ -110,5 +110,27 @@ foreach ($numericValues as $value => $freq) {
     <div id="mean"></div>
     <div id="median"></div>
     <div id="mode"></div>
+    <h1>Update Threshold</h1>
+    <form action="update_threshold.php" method="post">
+        <label for="threshold">New Threshold:</label>
+        <input type="text" id="threshold" name="threshold" required>
+        <button type="submit">Update Threshold</button>
+    </form>
 </body>
 </html>
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $threshold = $_POST['threshold'];  // Get the threshold value from the form
+
+    // Validate the threshold value
+    if (is_numeric($threshold) && $threshold > 0) {
+        file_put_contents('threshold.txt', $threshold);  // Write the new threshold to the file
+        echo "Threshold updated successfully to " . $threshold;
+    } else {
+        echo "Invalid threshold value";
+    }
+} else {
+    echo "No data posted";
+}
+?>

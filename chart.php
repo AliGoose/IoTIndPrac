@@ -13,49 +13,49 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// SQL to fetch and count data
-$sql = "SELECT message, COUNT(*) as frequency FROM Ard GROUP BY message";
+// SQL to fetch data
+$sql = "SELECT message FROM Ard";
 $result = $conn->query($sql);
 
-// Prepare data for chart
+// Prepare data for chart and extract numeric values
 $chartData = [];
+$numericValues = [];
+
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        $chartData[] = [(string)$row["message"], (int)$row["frequency"]];
+        // Extracting numeric value from message assuming format "Keyword: Value"
+        // Adjust regex as per your actual data format
+        preg_match('/\d+/', $row["message"], $matches);
+        $numericValue = $matches[0] ?? 0; // Default to 0 if no numeric part found
+        $numericValues[] = (int) $numericValue;
+        $chartData[] = [$row["message"], (int) $numericValue];
     }
 } else {
     echo "0 results";
 }
 
-$conn->close();
+// Calculate statistics
+$mean = $median = $mode = 0;
+if (count($numericValues) > 0) {
+    $mean = array_sum($numericValues) / count($numericValues);
 
-$mean = 0;
-$median = 0;
-$mode = 0;
+    sort($numericValues);
+    $mid = floor((count($numericValues) - 1) / 2);
+    $median = ($numericValues[$mid] + $numericValues[$mid + (count($numericValues) % 2)]) / 2;
 
-$frequencies = array_column($chartData, 1);
-$totalValues = array_sum($frequencies);
-$countValues = count($frequencies);
-
-if ($countValues > 0) {
-    $mean = $totalValues / $countValues;
-
-    sort($frequencies);
-    $mid = floor(($countValues - 1) / 2);
-    $median = ($frequencies[$mid] + $frequencies[$mid + ($countValues % 2)]) / 2;
-
-    $frequencyCounts = array_count_values($frequencies);
-    $maxFrequency = max($frequencyCounts);
-    $modes = array_keys($frequencyCounts, $maxFrequency);
+    $valuesCount = array_count_values($numericValues);
+    $maxFreq = max($valuesCount);
+    $modes = array_keys($valuesCount, $maxFreq);
     $mode = implode(", ", $modes);
 }
-?>
 
+$conn->close();
+?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Message Frequency Visualization</title>
+    <title>Message Value Analysis</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         google.charts.load('current', {'packages':['corechart']});
@@ -68,13 +68,14 @@ if ($countValues > 0) {
         function drawChart() {
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Message');
-            data.addColumn('number', 'Frequency');
+            data.addColumn('number', 'Value');
+
             data.addRows(<?php echo json_encode($chartData); ?>);
 
             var options = {
-                title: 'Message Frequency',
+                title: 'Message Values',
                 hAxis: {title: 'Message'},
-                vAxis: {title: 'Frequency'},
+                vAxis: {title: 'Value'},
                 legend: 'none',
                 bar: {groupWidth: "95%"},
                 chartArea: {width: "50%", height: "70%"}

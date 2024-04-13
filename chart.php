@@ -17,39 +17,51 @@ if ($conn->connect_error) {
 $sql = "SELECT message FROM Ard";
 $result = $conn->query($sql);
 
-// Prepare data for chart and extract numeric values
-$chartData = [];
+// Prepare data for chart
 $numericValues = [];
 
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        // Extracting numeric value from message assuming format "Keyword: Value"
-        // Adjust regex as per your actual data format
+        // Extracting numeric value from message
         preg_match('/\d+/', $row["message"], $matches);
         $numericValue = $matches[0] ?? 0; // Default to 0 if no numeric part found
-        $numericValues[] = (int) $numericValue;
-        $chartData[] = [$row["message"], (int) $numericValue];
+        if (!isset($numericValues[$numericValue])) {
+            $numericValues[$numericValue] = 0;
+        }
+        $numericValues[$numericValue]++;
     }
 } else {
     echo "0 results";
 }
 
-// Calculate statistics
+// Sort numeric values by key (numeric value)
+ksort($numericValues);
+
+// Statistics
 $mean = $median = $mode = 0;
-if (count($numericValues) > 0) {
-    $mean = array_sum($numericValues) / count($numericValues);
+$values = array_keys($numericValues);
+$frequencies = array_values($numericValues);
+$totalValues = array_sum($frequencies);
+$countValues = count($values);
 
-    sort($numericValues);
-    $mid = floor((count($numericValues) - 1) / 2);
-    $median = ($numericValues[$mid] + $numericValues[$mid + (count($numericValues) % 2)]) / 2;
+if ($countValues > 0) {
+    $mean = array_sum($values) / count($values);
 
-    $valuesCount = array_count_values($numericValues);
-    $maxFreq = max($valuesCount);
-    $modes = array_keys($valuesCount, $maxFreq);
+    $mid = floor((count($values) - 1) / 2);
+    $median = ($values[$mid] + $values[$mid + (count($values) % 2)]) / 2;
+
+    $maxFreq = max($frequencies);
+    $modes = array_keys($numericValues, $maxFreq);
     $mode = implode(", ", $modes);
 }
 
 $conn->close();
+
+// Prepare chart data
+$chartData = [];
+foreach ($numericValues as $value => $freq) {
+    $chartData[] = [(string)$value, $freq];
+}
 ?>
 
 <!DOCTYPE html>
@@ -66,18 +78,18 @@ $conn->close();
         var mode = <?php echo json_encode($mode); ?>;
 
         function drawChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Message');
-            data.addColumn('number', 'Value');
-
-            data.addRows(<?php echo json_encode($chartData); ?>);
+            var data = google.visualization.arrayToDataTable([
+                ['Message Value', 'Frequency'],
+                <?php foreach ($chartData as $item) {
+                    echo "[" . $item[0] . ", " . $item[1] . "],";
+                } ?>
+            ]);
 
             var options = {
-                title: 'Message Values',
-                hAxis: {title: 'Message'},
-                vAxis: {title: 'Value'},
+                title: 'Frequency of Message Values',
+                hAxis: {title: 'Message Value', titleTextStyle: {color: '#333'}},
+                vAxis: {title: 'Frequency', minValue: 0},
                 legend: 'none',
-                bar: {groupWidth: "95%"},
                 chartArea: {width: "50%", height: "70%"}
             };
 

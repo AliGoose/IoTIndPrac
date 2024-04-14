@@ -20,7 +20,6 @@ while True:
     line = ser.readline().decode('utf-8').strip()
     print(line)
     
-    # Parse the temperature and light level from the line
     try:
         temp_part, light_part = line.split(" - Light level: ")
         temperature = float(temp_part.split(": ")[1].replace(" C", ""))
@@ -29,5 +28,14 @@ while True:
         # Insert the parsed data into the database
         cur.execute("INSERT INTO SensorData (temperature, light_level) VALUES (?, ?)", (temperature, light_level))
         conn.commit()
+
+        # Determine which LED to turn on based on light level
+        if light_level < 100:
+            ser.write(b"RED\n")
+        elif light_level < 200:
+            ser.write(b"YELLOW\n")
+        else:
+            ser.write(b"GREEN\n")
+            
     except ValueError as e:
         print(f"Error parsing or inserting data: {e}")

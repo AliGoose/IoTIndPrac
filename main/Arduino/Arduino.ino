@@ -10,11 +10,11 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature sensor 
 DallasTemperature sensors(&oneWire);
 
-int lightSensorPin = A0; // Photoresistor connected to analog pin A0
-int greenLED = 2; 
-int yellowLED = 3;
-int redLED = 4;
-int buzzer = 7;
+const int lightSensorPin = A0; // Photoresistor connected to analog pin A0
+const int greenLED = 2; 
+const int yellowLED = 3;
+const int redLED = 4;
+const int buzzer = 7;
 
 void setup() {
   Serial.begin(9600); // Start serial communication at 9600 bps
@@ -37,11 +37,11 @@ void setup() {
   pinMode(greenLED, OUTPUT);
   pinMode(yellowLED, OUTPUT);
   pinMode(redLED, OUTPUT);
-
   pinMode(buzzer, OUTPUT);
 }
 
 void loop() {
+  //REFER TO ISR
 }
 
 //With the settings above, this IRS will trigger each 1000ms.
@@ -59,25 +59,24 @@ ISR(TIMER1_COMPA_vect){
   Serial.print("Light level: ");
   Serial.println(lightLevel);
 
-  if (lightLevel >= 0 && lightLevel < 100)
-  {
-    digitalWrite(greenLED, LOW);
-    digitalWrite(yellowLED, LOW);
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n');
+    controlLEDs(command);
+  }
+}
+
+void controlLEDs(String command) {
+  digitalWrite(greenLED, LOW);
+  digitalWrite(yellowLED, LOW);
+  digitalWrite(redLED, LOW);
+  digitalWrite(buzzer, LOW);
+  
+  if (command.indexOf("RED") != -1) {
     digitalWrite(redLED, HIGH);
     digitalWrite(buzzer, HIGH);
-  }
-  else if (lightLevel >= 100 && lightLevel < 200)
-  {
-    digitalWrite(greenLED, LOW);
+  } else if (command.indexOf("YELLOW") != -1) {
     digitalWrite(yellowLED, HIGH);
-    digitalWrite(redLED, LOW);
-    digitalWrite(buzzer, LOW);
-  }
-  else
-  {
+  } else if (command.indexOf("GREEN") != -1) {
     digitalWrite(greenLED, HIGH);
-    digitalWrite(yellowLED, LOW);
-    digitalWrite(redLED, LOW);
-    digitalWrite(buzzer, LOW);
   }
 }

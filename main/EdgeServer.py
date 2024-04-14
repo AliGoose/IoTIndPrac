@@ -5,6 +5,16 @@ import sys
 # Configure the serial connection
 ser = serial.Serial('/dev/ttyS0', 9600)
 
+# Function to get threshold values from the database
+def get_thresholds(cur):
+    cur.execute("SELECT temperature_threshold, light_threshold FROM Settings ORDER BY id DESC LIMIT 1")
+    row = cur.fetchone()
+    if row:
+        return row[0], row[1]
+    else:
+        print("No threshold settings found. Using default values.")
+        return 25.00, 100  # Default threshold values
+
 # Try to connect to the database
 try:
     conn = mariadb.connect(user="root", password="password123", host="127.0.0.1", port=3306, database="iot_db")
@@ -14,6 +24,9 @@ except mariadb.Error as e:
 
 # Create a cursor object
 cur = conn.cursor()
+
+# Fetch the current threshold settings from the database
+temperature_threshold, light_threshold = get_thresholds(cur)
 
 while True:
     # Read and decode the serial line
@@ -29,10 +42,13 @@ while True:
         cur.execute("INSERT INTO SensorData (temperature, light_level) VALUES (?, ?)", (temperature, light_level))
         conn.commit()
 
-        # Determine which LED to turn on based on light level
-        if light_level < 100:
+        # Fetch the latest threshold settings if needed (for example, periodically or based on some condition)
+        # temperature_threshold, light_threshold = get_thresholds(cur)
+
+        # Determine which LED to turn on based on light level threshold
+        if light_level < light_threshold:
             ser.write(b"RED\n")
-        elif light_level < 200:
+        elif light_level < light_threshold + 100:  # Assumes a range of 100 for the yellow threshold
             ser.write(b"YELLOW\n")
         else:
             ser.write(b"GREEN\n")

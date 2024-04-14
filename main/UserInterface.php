@@ -1,3 +1,39 @@
+<?php
+// Database connection details
+$host = 'localhost';
+$username = 'root'; // Your MariaDB username
+$password = 'password123'; // Your MariaDB password
+$database = 'iot_db';
+
+// Create connection
+$conn = new mysqli($host, $username, $password, $database);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// SQL to fetch temperature data and prepare frequency data
+$tempQuery = "SELECT temperature, COUNT(*) as freq FROM SensorData GROUP BY temperature ORDER BY temperature";
+$tempResult = $conn->query($tempQuery);
+
+$tempData = [];
+while ($row = $tempResult->fetch_assoc()) {
+    $tempData[] = [(float)$row["temperature"], (int)$row["freq"]];
+}
+
+// SQL to fetch light level data and prepare frequency data
+$lightQuery = "SELECT light_level, COUNT(*) as freq FROM SensorData GROUP BY light_level ORDER BY light_level";
+$lightResult = $conn->query($lightQuery);
+
+$lightData = [];
+while ($row = $lightResult->fetch_assoc()) {
+    $lightData[] = [(float)$row["light_level"], (int)$row["freq"]];
+}
+
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,89 +44,49 @@
         google.charts.setOnLoadCallback(drawCharts);
 
         function drawCharts() {
-            console.log(<?php echo json_encode($tempData); ?>);
-            console.log(<?php echo json_encode($lightData); ?>);
-            var_dump($tempData);
-            var_dump($lightData);
-
             drawTemperatureChart();
             drawLightChart();
         }
 
         function drawTemperatureChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Timestamp');
-            data.addColumn('number', 'Temperature');
-            data.addRows(<?php json_encode($tempData); if (json_last_error() !== JSON_ERROR_NONE) {echo json_last_error_msg();}?>);
+            var tempData = google.visualization.arrayToDataTable([
+                ['Temperature', 'Frequency'],
+                <?php foreach ($tempData as $item) echo "['" . $item[0] . "', " . $item[1] . "],"; ?>
+            ]);
 
-            var options = {
-                title: 'Temperature Over Time',
-                hAxis: {title: 'Time'},
-                vAxis: {title: 'Temperature (°C)'},
+            var tempOptions = {
+                title: 'Temperature Frequency',
+                hAxis: {title: 'Temperature (°C)'},
+                vAxis: {title: 'Frequency'},
                 legend: 'none'
             };
 
-            var chart = new google.visualization.LineChart(document.getElementById('temp_chart_div'));
-            chart.draw(data, options);
+            var tempChart = new google.visualization.ColumnChart(document.getElementById('temp_chart_div'));
+            tempChart.draw(tempData, tempOptions);
         }
 
         function drawLightChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Timestamp');
-            data.addColumn('number', 'Light Level');
-            data.addRows(<?php echo json_encode($lightData); ?>);
+            var lightData = google.visualization.arrayToDataTable([
+                ['Light Level', 'Frequency'],
+                <?php foreach ($lightData as $item) echo "['" . $item[0] . "', " . $item[1] . "],"; ?>
+            ]);
 
-            var options = {
-                title: 'Light Level Over Time',
-                hAxis: {title: 'Time'},
-                vAxis: {title: 'Light Level'},
+            var lightOptions = {
+                title: 'Light Level Frequency',
+                hAxis: {title: 'Light Level'},
+                vAxis: {title: 'Frequency'},
                 legend: 'none'
             };
 
-            var chart = new google.visualization.LineChart(document.getElementById('light_chart_div'));
-            chart.draw(data, options);
+            var lightChart = new google.visualization.ColumnChart(document.getElementById('light_chart_div'));
+            lightChart.draw(lightData, lightOptions);
         }
     </script>
 </head>
 <body>
+    <h2>Temperature Data</h2>
     <div id="temp_chart_div" style="width: 900px; height: 500px;"></div>
+    <h2>Light Level Data</h2>
     <div id="light_chart_div" style="width: 900px; height: 500px;"></div>
 </body>
 </html>
-
-<?php
-// Database connection details
-$host = 'localhost';
-$username = 'root'; // Your MariaDB username
-$password = 'password123'; // Your MariaDB password
-$database = 'iot_db';
-
-// Create connection
-$conn->set_charset("utf8mb4");
-$conn = new mysqli($host, $username, $password, $database);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// SQL to fetch temperature data
-$tempQuery = "SELECT temperature, timestamp FROM SensorData ORDER BY timestamp DESC LIMIT 100";
-$tempResult = $conn->query($tempQuery);
-
-$tempData = [];
-while ($row = $tempResult->fetch_assoc()) {
-    $tempData[] = [$row["timestamp"], (float) $row["temperature"]];
-}
-
-// SQL to fetch light level data
-$lightQuery = "SELECT light_level, timestamp FROM SensorData ORDER BY timestamp DESC LIMIT 100";
-$lightResult = $conn->query($lightQuery);
-
-$lightData = [];
-while ($row = $lightResult->fetch_assoc()) {
-    $lightData[] = [$row["timestamp"], (int) $row["light_level"]];
-}
-
-$conn->close();
-?>

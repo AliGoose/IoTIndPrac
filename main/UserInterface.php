@@ -21,11 +21,7 @@
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Timestamp');
             data.addColumn('number', 'Temperature');
-            data.addRows(<?json_encode($tempData);
-if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_last_error_msg(); // This will give you the error message
-}
-?>);
+            data.addRows(<?json_encode($tempData); if (json_last_error() !== JSON_ERROR_NONE) {echo json_last_error_msg();}?>);
 
             var options = {
                 title: 'Temperature Over Time',

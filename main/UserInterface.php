@@ -10,6 +10,9 @@
         function drawCharts() {
             console.log(<?php echo json_encode($tempData); ?>);
             console.log(<?php echo json_encode($lightData); ?>);
+            var_dump($tempData);
+            var_dump($lightData);
+
             drawTemperatureChart();
             drawLightChart();
         }
@@ -18,7 +21,11 @@
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Timestamp');
             data.addColumn('number', 'Temperature');
-            data.addRows(<?php echo json_encode($tempData); ?>);
+            data.addRows(<?json_encode($tempData);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    echo json_last_error_msg(); // This will give you the error message
+}
+?>);
 
             var options = {
                 title: 'Temperature Over Time',
@@ -63,6 +70,7 @@ $password = 'password123'; // Your MariaDB password
 $database = 'iot_db';
 
 // Create connection
+$conn->set_charset("utf8mb4");
 $conn = new mysqli($host, $username, $password, $database);
 
 // Check connection

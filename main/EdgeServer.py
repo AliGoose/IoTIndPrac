@@ -4,6 +4,9 @@ import sys
 
 # Configure the serial connection
 ser = serial.Serial('/dev/ttyS0', 9600)
+# How often to refresh settings in seconds
+refresh_rate = 60
+last_refresh_time = time.time()
 
 # Function to get threshold values from the database
 def get_thresholds(cur):
@@ -32,6 +35,12 @@ while True:
     # Read and decode the serial line
     line = ser.readline().decode('utf-8').strip()
     print(line)
+
+    # Fetch the latest threshold settings if needed
+    current_time = time.time()
+    if current_time - last_refresh_time > refresh_rate:
+        temperature_threshold, light_threshold = get_thresholds(cur)
+        last_refresh_time = current_time
     
     try:
         temp_part, light_part = line.split(" - Light level: ")

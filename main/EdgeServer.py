@@ -1,6 +1,7 @@
 import serial
 import mariadb
 import sys
+import time
 
 # Configure the serial connection
 ser = serial.Serial('/dev/ttyS0', 9600)

@@ -8,6 +8,8 @@
         google.charts.setOnLoadCallback(drawCharts);
 
         function drawCharts() {
+            console.log(<?php echo json_encode($tempData); ?>);
+            console.log(<?php echo json_encode($lightData); ?>);
             drawTemperatureChart();
             drawLightChart();
         }

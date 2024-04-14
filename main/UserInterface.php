@@ -34,6 +34,45 @@ while ($row = $lightResult->fetch_assoc()) {
 $conn->close();
 ?>
 
+<?php
+// Database connection details
+$host = 'localhost';
+$username = 'root'; // Your MariaDB username
+$password = 'password123'; // Your MariaDB password
+$database = 'iot_db';
+
+// Check if form was submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Create connection
+    $conn = new mysqli($host, $username, $password, $database);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Retrieve and sanitize POST data
+    $temperature_threshold = filter_input(INPUT_POST, 'temperature_threshold', FILTER_VALIDATE_FLOAT);
+    $light_threshold = filter_input(INPUT_POST, 'light_threshold', FILTER_VALIDATE_INT);
+
+    // Prepare SQL to update settings
+    $stmt = $conn->prepare("INSERT INTO Settings (temperature_threshold, light_threshold) VALUES (?, ?)");
+    $stmt->bind_param("di", $temperature_threshold, $light_threshold);
+
+    // Execute and check for errors
+    if ($stmt->execute()) {
+        echo "<p>Threshold updated successfully.</p>";
+    } else {
+        echo "<p>Error updating threshold: " . $stmt->error . "</p>";
+    }
+
+    // Close connection
+    $stmt->close();
+    $conn->close();
+}
+?>
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -88,5 +127,13 @@ $conn->close();
     <div id="temp_chart_div" style="width: 900px; height: 500px;"></div>
     <h2>Light Level Data</h2>
     <div id="light_chart_div" style="width: 900px; height: 500px;"></div>
+    <form action="UserInterface.php" method="post">
+    <h2>Update Threshold Settings</h2>
+        <label for="temperature_threshold">Temperature Threshold (°C):</label>
+            <input type="text" id="temperature_threshold" name="temperature_threshold" required><br><br>
+        <label for="light_threshold">Light Threshold:</label>
+            <input type="text" id="light_threshold" name="light_threshold" required><br><br>
+        <input type="submit" value="Update Threshold">
+    </form>
 </body>
 </html>

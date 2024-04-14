@@ -58,7 +58,7 @@
 $host = 'localhost';
 $username = 'root'; // Your MariaDB username
 $password = 'password123'; // Your MariaDB password
-$database = 'test';
+$database = 'iot_db';
 
 // Create connection
 $conn = new mysqli($host, $username, $password, $database);

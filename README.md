@@ -1,2 +1,2 @@
 # READ ME
-The final solution used in this project are all the files located under the 'main' folder
+The final solution used in this project is all the files located under the '**main**' folder
